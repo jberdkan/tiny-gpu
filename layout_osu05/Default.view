@@ -1,13 +1,6 @@
 # Version:1.0 MMMC View Definition File
 # Do Not Remove Above Line
 #
-# Lab 7 (ECE 4150/6250) MMMC view for the gpu in OSU05 / AMI 0.5
-# Save this as  ~/cadence/Default.view  and point the Innovus Design Import
-# "MMMC View Definition File" field at it.
-#
-# Assumes the OSU05 abstract/timing files were copied into ~/cadence/innovus/
-# per Lab 7 Part I (osu05_stdcells.tlf, osu05_stdcells_expanded.tlf).
-# Adjust the sdc_files path to wherever you placed gpu_scan.sdc.
 
 create_library_set -name CommonTiming \
     -timing {innovus/osu05_stdcells_expanded.tlf innovus/osu05_stdcells.tlf}
