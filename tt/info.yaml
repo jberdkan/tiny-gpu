@@ -3,9 +3,9 @@
 # discord/etc. before submitting, and re-check `tiles` after a hardening run.
 project:
   title: "tiny-gpu"
-  author: "your name"
+  author: "Joyce Berdkan"
   discord: ""
-  description: "Minimal GPU (tiny-gpu) shrunk to 1 core / 4 threads with on-chip program & data memory and a byte-serial host loader."
+  description: "Minimal GPU (tiny-gpu) shrunk to 1 core / 2 threads (divider removed) with on-chip program & data memory and a byte-serial host loader."
   language: "Verilog"
   clock_hz: 10000000        # 10 MHz target (relax if timing is tight)
 
