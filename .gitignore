@@ -1,5 +1,28 @@
 */**/__pycache__
 build/
+work/
+src/*_syn.*
+src/*_scan.*
+src/*_tb_patterns.v
+synthesis/reports/
+synthesis/WORK/
+synthesis/work/
+synthesis/netlists/*.v
+synthesis/netlists/*.sdf
+synthesis/netlists/*.spef
+synthesis/*.log
+synthesis/*.svf
+synthesis/alib-*/
+layout/work/
+layout/reports/
+layout/netlists/
+layout/floorplan/
+# TetraMax ATPG generated artifacts (root)
+/gpu_scan.cell
+/gpu_scan.dft_drc
+/gpu_scan.scan_path
+# LibreLane / OpenLane run outputs
+runs/
 test/logs/*
 !.gitkeep
 gds/**/*.gltf

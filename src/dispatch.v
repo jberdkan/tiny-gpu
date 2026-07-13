@@ -16,16 +16,18 @@ module dispatch #(
     // Kernel Metadata
     input wire [7:0] thread_count,
 
-    // Core States
-    input reg [NUM_CORES-1:0] core_done,
+    // Core States (per-core buses are flattened, core i at [WIDTH*i +: WIDTH])
+    input wire [NUM_CORES-1:0] core_done,
     output reg [NUM_CORES-1:0] core_start,
     output reg [NUM_CORES-1:0] core_reset,
-    output reg [7:0] core_block_id [NUM_CORES-1:0],
-    output reg [$clog2(THREADS_PER_BLOCK):0] core_thread_count [NUM_CORES-1:0],
+    output reg [NUM_CORES*8-1:0] core_block_id,
+    output reg [NUM_CORES*($clog2(THREADS_PER_BLOCK)+1)-1:0] core_thread_count,
 
     // Kernel Execution
     output reg done
 );
+    localparam THREAD_COUNT_BITS = $clog2(THREADS_PER_BLOCK) + 1;
+
     // Calculate the total number of blocks based on total threads & threads per block
     wire [7:0] total_blocks;
     assign total_blocks = (thread_count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
@@ -35,6 +37,8 @@ module dispatch #(
     reg [7:0] blocks_done; // How many blocks have finished processing?
     reg start_execution; // EDA: Unimportant hack used because of EDA tooling
 
+    integer i;
+
     always @(posedge clk) begin
         if (reset) begin
             done <= 0;
@@ -42,35 +46,35 @@ module dispatch #(
             blocks_done = 0;
             start_execution <= 0;
 
-            for (int i = 0; i < NUM_CORES; i++) begin
+            for (i = 0; i < NUM_CORES; i = i + 1) begin
                 core_start[i] <= 0;
                 core_reset[i] <= 1;
-                core_block_id[i] <= 0;
-                core_thread_count[i] <= THREADS_PER_BLOCK;
+                core_block_id[8*i +: 8] <= 0;
+                core_thread_count[THREAD_COUNT_BITS*i +: THREAD_COUNT_BITS] <= THREADS_PER_BLOCK;
             end
-        end else if (start) begin    
+        end else if (start) begin
             // EDA: Indirect way to get @(posedge start) without driving from 2 different clocks
-            if (!start_execution) begin 
+            if (!start_execution) begin
                 start_execution <= 1;
-                for (int i = 0; i < NUM_CORES; i++) begin
+                for (i = 0; i < NUM_CORES; i = i + 1) begin
                     core_reset[i] <= 1;
                 end
             end
 
             // If the last block has finished processing, mark this kernel as done executing
-            if (blocks_done == total_blocks) begin 
+            if (blocks_done == total_blocks) begin
                 done <= 1;
             end
 
-            for (int i = 0; i < NUM_CORES; i++) begin
-                if (core_reset[i]) begin 
+            for (i = 0; i < NUM_CORES; i = i + 1) begin
+                if (core_reset[i]) begin
                     core_reset[i] <= 0;
 
                     // If this core was just reset, check if there are more blocks to be dispatched
-                    if (blocks_dispatched < total_blocks) begin 
+                    if (blocks_dispatched < total_blocks) begin
                         core_start[i] <= 1;
-                        core_block_id[i] <= blocks_dispatched;
-                        core_thread_count[i] <= (blocks_dispatched == total_blocks - 1) 
+                        core_block_id[8*i +: 8] <= blocks_dispatched;
+                        core_thread_count[THREAD_COUNT_BITS*i +: THREAD_COUNT_BITS] <= (blocks_dispatched == total_blocks - 1)
                             ? thread_count - (blocks_dispatched * THREADS_PER_BLOCK)
                             : THREADS_PER_BLOCK;
 
@@ -79,7 +83,7 @@ module dispatch #(
                 end
             end
 
-            for (int i = 0; i < NUM_CORES; i++) begin
+            for (i = 0; i < NUM_CORES; i = i + 1) begin
                 if (core_start[i] && core_done[i]) begin
                     // If a core just finished executing it's current block, reset it
                     core_reset[i] <= 1;

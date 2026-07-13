@@ -1,0 +1,62 @@
+# TinyTapeout project manifest for tiny-gpu.
+# Format follows the TinyTapeout template (tt09/tt10-era). Fill in author/
+# discord/etc. before submitting, and re-check `tiles` after a hardening run.
+project:
+  title: "tiny-gpu"
+  author: "your name"
+  discord: ""
+  description: "Minimal GPU (tiny-gpu) shrunk to 1 core / 4 threads with on-chip program & data memory and a byte-serial host loader."
+  language: "Verilog"
+  clock_hz: 10000000        # 10 MHz target (relax if timing is tight)
+
+  # Tile allocation. tiny-gpu is large for TT even shrunk; start big and shrink
+  # once a hardening run reports the real area/utilization. 4x2 is a guess.
+  tiles: "4x2"
+
+  top_module: "tt_um_tiny_gpu"
+
+  # Wrapper first, then every tiny-gpu RTL module it pulls in.
+  source_files:
+    - "tt_um_tiny_gpu.v"
+    - "alu.v"
+    - "dcr.v"
+    - "decoder.v"
+    - "fetcher.v"
+    - "lsu.v"
+    - "pc.v"
+    - "registers.v"
+    - "scheduler.v"
+    - "controller.v"
+    - "dispatch.v"
+    - "core.v"
+    - "gpu.v"
+
+# Documented pin function. uio pins are inputs (mode select); the design does
+# not drive uio (uio_oe = 0).
+pinout:
+  ui[0]: "payload byte bit 0 (host->chip: program/data/thread byte)"
+  ui[1]: "payload byte bit 1"
+  ui[2]: "payload byte bit 2"
+  ui[3]: "payload byte bit 3"
+  ui[4]: "payload byte bit 4"
+  ui[5]: "payload byte bit 5"
+  ui[6]: "payload byte bit 6"
+  ui[7]: "payload byte bit 7"
+
+  uo[0]: "result byte bit 0  (READ_DATA); else = done flag"
+  uo[1]: "result byte bit 1"
+  uo[2]: "result byte bit 2"
+  uo[3]: "result byte bit 3"
+  uo[4]: "result byte bit 4"
+  uo[5]: "result byte bit 5"
+  uo[6]: "result byte bit 6"
+  uo[7]: "result byte bit 7"
+
+  uio[0]: "mode bit 0 (0=idle 1=load_prog 2=load_data 3=set_threads 4=start 5=read_data 6=reset_ptr)"
+  uio[1]: "mode bit 1"
+  uio[2]: "mode bit 2"
+  uio[3]: "unused"
+  uio[4]: "unused"
+  uio[5]: "unused"
+  uio[6]: "unused"
+  uio[7]: "unused"

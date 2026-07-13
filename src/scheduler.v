@@ -14,24 +14,24 @@
 // > Technically, different instructions can branch to different PCs, requiring "branch divergence." In
 //   this minimal implementation, we assume no branch divergence (naive approach for simplicity)
 module scheduler #(
-    parameter THREADS_PER_BLOCK = 4,
+    parameter THREADS_PER_BLOCK = 4
 ) (
     input wire clk,
     input wire reset,
     input wire start,
-    
+
     // Control Signals
-    input reg decoded_mem_read_enable,
-    input reg decoded_mem_write_enable,
-    input reg decoded_ret,
+    input wire decoded_mem_read_enable,
+    input wire decoded_mem_write_enable,
+    input wire decoded_ret,
 
-    // Memory Access State
-    input reg [2:0] fetcher_state,
-    input reg [1:0] lsu_state [THREADS_PER_BLOCK-1:0],
+    // Memory Access State (2 bits per thread, thread i at lsu_state[2*i +: 2])
+    input wire [2:0] fetcher_state,
+    input wire [THREADS_PER_BLOCK*2-1:0] lsu_state,
 
-    // Current & Next PC
+    // Current & Next PC (8 bits per thread, thread i at next_pc[8*i +: 8])
     output reg [7:0] current_pc,
-    input reg [7:0] next_pc [THREADS_PER_BLOCK-1:0],
+    input wire [THREADS_PER_BLOCK*8-1:0] next_pc,
 
     // Execution State
     output reg [2:0] core_state,
@@ -45,24 +45,27 @@ module scheduler #(
         EXECUTE = 3'b101,     // Execute ALU and PC calculations
         UPDATE = 3'b110,      // Update registers, NZP, and PC
         DONE = 3'b111;        // Done executing this block
-    
-    always @(posedge clk) begin 
+
+    reg any_lsu_waiting;
+    integer i;
+
+    always @(posedge clk) begin
         if (reset) begin
             current_pc <= 0;
             core_state <= IDLE;
             done <= 0;
-        end else begin 
+        end else begin
             case (core_state)
                 IDLE: begin
                     // Here after reset (before kernel is launched, or after previous block has been processed)
-                    if (start) begin 
+                    if (start) begin
                         // Start by fetching the next instruction for this block based on PC
                         core_state <= FETCH;
                     end
                 end
-                FETCH: begin 
+                FETCH: begin
                     // Move on once fetcher_state = FETCHED
-                    if (fetcher_state == 3'b010) begin 
+                    if (fetcher_state == 3'b010) begin
                         core_state <= DECODE;
                     end
                 end
@@ -70,18 +73,17 @@ module scheduler #(
                     // Decode is synchronous so we move on after one cycle
                     core_state <= REQUEST;
                 end
-                REQUEST: begin 
+                REQUEST: begin
                     // Request is synchronous so we move on after one cycle
                     core_state <= WAIT;
                 end
                 WAIT: begin
                     // Wait for all LSUs to finish their request before continuing
-                    reg any_lsu_waiting = 1'b0;
-                    for (int i = 0; i < THREADS_PER_BLOCK; i++) begin
+                    any_lsu_waiting = 1'b0;
+                    for (i = 0; i < THREADS_PER_BLOCK; i = i + 1) begin
                         // Make sure no lsu_state = REQUESTING or WAITING
-                        if (lsu_state[i] == 2'b01 || lsu_state[i] == 2'b10) begin
+                        if (lsu_state[2*i +: 2] == 2'b01 || lsu_state[2*i +: 2] == 2'b10) begin
                             any_lsu_waiting = 1'b1;
-                            break;
                         end
                     end
 
@@ -94,20 +96,20 @@ module scheduler #(
                     // Execute is synchronous so we move on after one cycle
                     core_state <= UPDATE;
                 end
-                UPDATE: begin 
-                    if (decoded_ret) begin 
+                UPDATE: begin
+                    if (decoded_ret) begin
                         // If we reach a RET instruction, this block is done executing
                         done <= 1;
                         core_state <= DONE;
-                    end else begin 
+                    end else begin
                         // TODO: Branch divergence. For now assume all next_pc converge
-                        current_pc <= next_pc[THREADS_PER_BLOCK-1];
+                        current_pc <= next_pc[8*(THREADS_PER_BLOCK-1) +: 8];
 
                         // Update is synchronous so we move on after one cycle
                         core_state <= FETCH;
                     end
                 end
-                DONE: begin 
+                DONE: begin
                     // no-op
                 end
             endcase

@@ -1,0 +1,9 @@
+# tiny-gpu synthesized netlist, compiled by: source sim-nc -compilesyn
+# paths are relative to the simulation/work/ directory the script runs in
+# dc_syn.tcl writes the netlist next to the RTL (src/ - or source/ on
+# checkouts that use that name; adjust the path below to match)
+# used together with -compilecells for gate-level simulation
+
+ver_files=(
+    ../../src/gpu_syn.v
+)

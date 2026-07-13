@@ -1,0 +1,141 @@
+#!/bin/bash
+
+# a simple bash script for Cadence Xcelium verilog simulations
+# adapted for tiny-gpu: run from the simulation/ directory;
+# RTL lives in ../src/, testbenches in ../test/
+#
+# usage (from simulation/):
+#   source sim-nc -compile                 compile RTL listed in scripts/design_files
+#   source sim-nc -compilesyn              compile synthesized netlist listed in scripts/design_files_syn
+#   source sim-nc -compilecells            compile standard cell library
+#   source sim-nc -sim test_matadd         simulate a testbench from ../test/
+#   source sim-nc -sim test_matadd -gui    simulate with the waveform GUI
+#
+# options can be combined, e.g.: source sim-nc -compile -sim test_matadd
+
+echo ""
+echo "Xcelium Simulation Control File"
+
+# reset control variables
+compile=0
+cells=0
+syn=0
+phy=0
+sim=0
+gui=0
+sdf=0
+topmodule=""
+newtopflag=0
+sim_options=""
+
+# read and process input arguments
+for arg in $@
+do
+    if [ "$arg" == "-compile" ]
+    then
+      compile=1
+    elif [ "$arg" == "-compilecells" ]
+    then
+	cells=1
+    elif [ "$arg" == "-compilesyn" ]
+    then
+	syn=1
+    elif [ "$arg" == "-compilephy" ]
+    then
+        phy=1
+    elif [ "$arg" == "-gui" ]
+    then
+	gui=1
+    elif [ "$arg" == "-sdf" ]
+    then
+	sdf=1
+    elif [ $newtopflag == 1 ]
+    then
+	topmodule=$arg
+	newtopflag=0
+    elif [ "$arg" == "-sim" ]
+    then
+	sim=1
+	newtopflag=1
+    else
+	echo "Warning: "${arg}" is not a recognized command option"
+	echo ""
+    fi
+done
+
+# push down into work directory
+mkdir -p work
+pushd work
+
+# if compiling source files
+if [ $compile == 1 ]
+then
+    echo "   Compiling files listed in design_files"
+    # read in list of design files
+    source ../scripts/design_files
+
+    # loop through list of design files and compile
+    for design_file in ${ver_files[@]}
+    do
+	echo "   Compiling "$design_file
+	xmverilog $design_file -compile
+    done
+fi
+
+# if compile synthesized netlist
+if [ $syn == 1 ]
+then
+    echo "   Compiling files listed in design_files_syn"
+    # read in list of design files
+    source ../scripts/design_files_syn
+
+    # loop through list of design files and compile
+    for design_file in ${ver_files[@]}
+    do
+	echo "   Compiling "$design_file
+	xmverilog $design_file -compile
+    done
+fi
+
+# if compile standard cell library
+if [ $cells == 1 ]
+then
+    echo "   Compiling standard cell library"
+    for cell_file in /apps/design_kits/ibm_kits/IBM_IP/ibm_cmos8hp/std_cell/sc/v.20110613/verilog/*.v
+    do
+	echo "   Compiling "$cell_file
+	xmverilog $cell_file -compile
+    done
+fi
+
+# if simulating files
+if [ $sim == 1 ]
+then
+    echo "   Launching Simulation"
+
+    if [ $gui == 1 ]
+    then
+	sim_options="+gui"
+    fi
+
+    # define simulation options
+    sim_options=${sim_options}" +access+r -timescale 1ns/1ps"
+
+    # enable SDF back-annotation in the testbench (gate-level sim)
+    if [ $sdf == 1 ]
+    then
+	sim_options=${sim_options}" +define+SDF"
+    fi
+
+    # launch simulation (testbenches live in ../../test/ relative to simulation/work/)
+    if [ "${topmodule}" == "" ]
+    then
+	echo "   ***Simulation Error: No top module defined***"
+    else
+	xmverilog ../../test/${topmodule}.v ${sim_options}
+    fi
+
+fi
+
+# pop back to simulation directory
+popd

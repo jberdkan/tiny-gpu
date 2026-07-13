@@ -1,0 +1,9 @@
+{
+    "DESIGN_NAME": "gpu",
+    "VERILOG_FILES": "dir::src/*.v",
+    "CLOCK_PORT": "clk",
+    "CLOCK_PERIOD": 20,
+    "PDK": "sky130A",
+    "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+    "FP_CORE_UTIL": 40
+}

@@ -1,0 +1,23 @@
+{
+    "DESIGN_NAME": "tt_um_tiny_gpu",
+    "VERILOG_FILES": [
+        "dir::tt_um_tiny_gpu.v",
+        "dir::../src/alu.v",
+        "dir::../src/dcr.v",
+        "dir::../src/decoder.v",
+        "dir::../src/fetcher.v",
+        "dir::../src/lsu.v",
+        "dir::../src/pc.v",
+        "dir::../src/registers.v",
+        "dir::../src/scheduler.v",
+        "dir::../src/controller.v",
+        "dir::../src/dispatch.v",
+        "dir::../src/core.v",
+        "dir::../src/gpu.v"
+    ],
+    "CLOCK_PORT": "clk",
+    "CLOCK_PERIOD": 100,
+    "PDK": "sky130A",
+    "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+    "FP_CORE_UTIL": 40
+}

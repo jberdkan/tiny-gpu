@@ -1,0 +1,17 @@
+# tiny-gpu RTL design files, compiled by: source sim-nc -compile
+# paths are relative to the simulation/work/ directory the script runs in
+
+ver_files=(
+    ../../src/alu.v
+    ../../src/dcr.v
+    ../../src/decoder.v
+    ../../src/fetcher.v
+    ../../src/lsu.v
+    ../../src/pc.v
+    ../../src/registers.v
+    ../../src/scheduler.v
+    ../../src/controller.v
+    ../../src/dispatch.v
+    ../../src/core.v
+    ../../src/gpu.v
+)

@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# a simple bash script for Synopsys Design Compiler
+# run from the synthesis/ directory:
+#   source run_syn -top gpu          batch synthesis (dc_shell)
+#   source run_syn -top gpu -gui     synthesis in Design Vision
+
+echo "Design Compiler Synthesis Control Script"
+
+# reset control variables
+gui=0
+topmodule=""
+newtopflag=0
+top=0
+
+# read and process input arguments
+for arg in $@
+do
+    if [ "$arg" == "-gui" ]
+    then
+	gui=1
+    elif [ $newtopflag == 1 ]
+    then
+	topmodule=$arg
+	newtopflag=0
+    elif [ "$arg" == "-top" ]
+    then
+	newtopflag=1
+        top=1
+    else
+	echo "Warning: "${arg}" is not a recognized command option"
+	echo ""
+    fi
+done
+
+echo ""
+mkdir -p work netlists reports
+pushd work
+
+if [ $gui == 1 ]
+then
+   if [ $top == 1 ]
+   then
+      echo "   Launching Design Vision with GUI for "${topmodule}
+      design_vision -f ../scripts/synthesis_${topmodule}.tcl
+   else
+      echo "   Launching Design Vision with GUI"
+      design_vision
+   fi
+else
+   if [ $top == 1 ]
+   then
+      echo "   Launching dc_shell for "${topmodule}
+      dc_shell -f ../scripts/synthesis_${topmodule}.tcl
+   else
+      echo "   Launching dc_shell"
+      dc_shell
+   fi
+fi
+
+popd

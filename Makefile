@@ -1,25 +1,14 @@
-.PHONY: test compile
+.PHONY: test
 
-export LIBPYTHON_LOC=$(shell cocotb-config --libpython)
+# RTL only — exclude synthesis/scan outputs (gpu_syn.v, gpu_scan.v) that DC writes into src/
+RTL_SRCS = $(filter-out $(wildcard src/*_syn.v) $(wildcard src/*_scan.v), $(wildcard src/*.v))
 
-test_%:
-	make compile
-	iverilog -o build/sim.vvp -s gpu -g2012 build/gpu.v
-	MODULE=test.test_$* vvp -M $$(cocotb-config --prefix)/cocotb/libs -m libcocotbvpi_icarus build/sim.vvp
+test: test_matadd test_matmul
 
-compile:
-	make compile_alu
-	sv2v -I src/* -w build/gpu.v
-	echo "" >> build/gpu.v
-	cat build/alu.v >> build/gpu.v
-	echo '`timescale 1ns/1ns' > build/temp.v
-	cat build/gpu.v >> build/temp.v
-	mv build/temp.v build/gpu.v
-
-compile_%:
-	sv2v -w build/$*.v src/$*.sv
-
-# TODO: Get gtkwave visualizaiton
+test_%: test/test_%.v $(RTL_SRCS)
+	mkdir -p build
+	iverilog -g2005 -o build/test_$*.vvp -s test_$* $(RTL_SRCS) test/test_$*.v
+	vvp build/test_$*.vvp
 
 show_%: %.vcd %.gtkw
 	gtkwave $^
