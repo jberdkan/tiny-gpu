@@ -14,9 +14,10 @@ synthesis/*.log
 synthesis/*.svf
 synthesis/alib-*/
 layout/work/
-layout/reports/
 layout/netlists/
 layout/floorplan/
+# NOTE: layout/reports/ is intentionally tracked -- it holds curated, publishable
+# OSU05 (open-cell) signoff results. Do not put proprietary-PDK (cmos8hp) outputs here.
 # TetraMax ATPG generated artifacts (root)
 /gpu_scan.cell
 /gpu_scan.dft_drc
