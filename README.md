@@ -53,6 +53,7 @@ If you use this, please credit the original **adam-maj/tiny-gpu** as well.
   - [Matrix Multiplication](/tree/master?tab=readme-ov-file#matrix-multiplication)
 - [Simulation](#simulation)
 - [Advanced Functionality](#advanced-functionality)
+- [ASIC Implementation & Tapeout](#asic-implementation--tapeout)
 - [Next Steps](#next-steps)
 
 # Overview
@@ -409,6 +410,82 @@ In reality, individual threads could diverge from each other and branch to diffe
 Another core functionality of modern GPUs is the ability to set **barriers** so that groups of threads in a block can synchronize and wait until all other threads in the same block have gotten to a certain point before continuing execution.
 
 This is useful for cases where threads need to exchange shared data with each other so they can ensure that the data has been fully processed.
+
+# ASIC Implementation & Tapeout
+
+Beyond simulation, this fork takes tiny-gpu through a **complete ASIC
+implementation flow** — from RTL all the way to a manufacturable, DRC/LVS-clean
+layout on the open-source **SkyWater sky130** process, plus a **TinyTapeout**
+adapter so the design can actually be fabricated.
+
+![tiny-gpu on sky130](tt/tapeout/tt_um_tiny_gpu.png)
+
+*The `tt_um_tiny_gpu` layout on sky130 — standard cells placed and routed, ~177,000 µm².*
+
+### Repository layout
+
+| Directory | What's in it |
+|-----------|--------------|
+| `src/`         | The GPU RTL, converted from SystemVerilog to portable **Verilog-2005** |
+| `test/`        | Verilog testbenches for the matadd / matmul kernels |
+| `simulation/`  | Cadence Xcelium simulation script (`sim-nc`) |
+| `synthesis/`   | **Design Compiler** synthesis, **TetraMax** DFT scan + ATPG scripts |
+| `layout/`      | **Innovus** place-and-route scripts (IBM cmos8hp) |
+| `openlane/`    | **LibreLane** config for the full gpu on sky130 |
+| `tt/`          | **TinyTapeout adapter** — wrapper, docs, host loader, tapeout deliverables |
+
+### RTL: Verilog-2005
+
+The original SystemVerilog was converted to plain **Verilog-2005** so it runs
+through the full range of ASIC tools (Design Compiler, Yosys/LibreLane, Icarus).
+Unpacked-array ports were flattened to packed vectors, and the memory
+controller's variable-index writes were rewritten into a Yosys-safe form.
+
+Simulate the kernels with [Icarus Verilog](http://iverilog.icarus.com/):
+
+```bash
+iverilog -g2005 -s test_matadd -o matadd.vvp src/*.v test/test_matadd.v && vvp matadd.vvp
+```
+
+### Open-source flow: RTL → GDS on sky130
+
+The whole gpu was hardened through [LibreLane](https://github.com/librelane/librelane)
+(synthesis → floorplan → placement → CTS → routing → DRC → LVS → GDS):
+
+```bash
+librelane --pdk sky130A --scl sky130_fd_sc_hd config.json
+```
+
+### TinyTapeout adapter (`tt/`)
+
+TinyTapeout gives every project a fixed **8-in / 8-out / 8-bidirectional** pin
+interface, but tiny-gpu normally needs external memory and ~180 pins. The adapter
+(`tt/tt_um_tiny_gpu.v`) makes it self-contained:
+
+- **On-chip program & data memory** that speak the gpu's read/write handshake.
+- A **byte-per-clock host protocol** (`uio[2:0]` = mode, `ui_in` = payload,
+  `uo_out` = result/done) to load a program, load data, run the kernel, and read
+  results back over the pins.
+- A **shrunk configuration** (1 core / 2 threads / 2 data channels, divider
+  removed via `NO_DIV`) to fit a TinyTapeout tile.
+
+The matadd kernel is verified running end-to-end through the pin protocol
+(`tt/tb_tt_um_tiny_gpu.v`), and a ready-to-run **MicroPython host driver** for the
+TinyTapeout demo board is in `tt/host/tiny_gpu_host.py`.
+
+**sky130 signoff results** (`tt/tapeout/`):
+
+| Metric | Value |
+|--------|-------|
+| Die area | 177,166 µm² |
+| Std-cell utilization | 54 % |
+| Magic DRC / KLayout DRC | 0 / 0 |
+| LVS errors | 0 |
+| Antenna violations | 0 |
+| TinyTapeout tiles | 6×2 |
+
+The final **GDSII, layout render, gate-level netlist, and metrics** are checked
+into [`tt/tapeout/`](tt/tapeout/).
 
 # Next Steps
 
