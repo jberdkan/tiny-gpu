@@ -456,6 +456,25 @@ The whole gpu was hardened through [LibreLane](https://github.com/librelane/libr
 librelane --pdk sky130A --scl sky130_fd_sc_hd config.json
 ```
 
+### Commercial flow: Cadence on OSU05
+
+The gpu was also taken through the **Cadence** toolchain — Design Compiler
+(synthesis), TetraMax (DFT scan insertion + ATPG), and Innovus (place-and-route)
+— and hardened on the open **OSU05 / AMI 0.5 µm** standard cells (3 metal layers).
+
+![gpu on OSU05 (Cadence Innovus)](layout/reports/osu05_gpu_layout.png)
+
+*The `gpu` routed in Innovus on OSU05 — green = standard cells + routing, blue/red = power grid, yellow = I/O pins.*
+
+Innovus signoff was clean (see [`layout/reports/`](layout/reports/)):
+
+| Check | Result |
+|-------|--------|
+| `verify_drc` | No DRC violations were found |
+| `verify_connectivity` | Found no problems or warnings |
+
+*(The proprietary IBM cmos8hp netlists/GDS are under a foundry NDA and are not included; only the open-cell OSU05 results and the flow scripts are published.)*
+
 ### TinyTapeout adapter (`tt/`)
 
 TinyTapeout gives every project a fixed **8-in / 8-out / 8-bidirectional** pin
