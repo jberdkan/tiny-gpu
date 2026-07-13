@@ -1,19 +1,5 @@
 #!/bin/bash
-# ECE 6214 layout launcher, adapted for tiny-gpu
-#
-# run from the layout/ directory:   source run_layout
-#
-# Innovus starts inside layout/work/ so the relative paths used by the
-# layout scripts resolve correctly:
-#   ../scripts/...              (layout tcl scripts)
-#   ../reports/gpu/...          (timing reports)
-#   ../netlists/...             (routed netlist / spef / sdf out)
-#   ../floorplan/...            (saved floorplan)
-#   ../../synthesis/netlists/   (synthesized netlist + sdc in)
-#
-# Once innovus is up, work through ../scripts/layout_gpu.tcl SECTION BY
-# SECTION (don't source the whole file blindly - the floorplan portion
-# has GUI steps you must do by hand; see the comments in the script).
+
 
 # make sure the expected directory structure exists
 mkdir -p work work/saves floorplan netlists reports scripts
