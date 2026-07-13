@@ -9,9 +9,11 @@ project:
   language: "Verilog"
   clock_hz: 10000000        # 10 MHz target (relax if timing is tight)
 
-  # Tile allocation. tiny-gpu is large for TT even shrunk; start big and shrink
-  # once a hardening run reports the real area/utilization. 4x2 is a guess.
-  tiles: "4x2"
+  # Tile allocation. Confirmed by a sky130 hardening run: die ~177,166 um^2 at
+  # 1 core / 2 threads / 2 data channels with the ALU divider removed (NO_DIV),
+  # DRC/LVS clean. ~9.8 tiles -> 6x2 (fits ~216k um^2). Dropping to THREADS=1
+  # would reach 4x2 but removes thread-level parallelism, so 6x2 it is.
+  tiles: "6x2"
 
   top_module: "tt_um_tiny_gpu"
 

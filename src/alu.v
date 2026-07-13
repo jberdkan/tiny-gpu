@@ -50,7 +50,15 @@ module alu (
                             alu_out_reg <= rs * rt;
                         end
                         DIV: begin
+`ifdef NO_DIV
+                            // Area-constrained builds (e.g. TinyTapeout) define
+                            // NO_DIV to drop the per-thread 8-bit divider, the
+                            // single largest datapath block. The matadd/matmul
+                            // demo kernels never issue DIV; here it returns 0.
+                            alu_out_reg <= 8'b0;
+`else
                             alu_out_reg <= rs / rt;
+`endif
                         end
                     endcase
                 end
