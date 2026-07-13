@@ -4,6 +4,39 @@ A minimal GPU implementation in Verilog optimized for learning about how GPUs wo
 
 Built with <15 files of fully documented Verilog, complete documentation on architecture & ISA, working matrix addition/multiplication kernels, and full support for kernel simulation & execution traces.
 
+---
+
+## Attribution & this fork
+
+This repository is a fork of **[adam-maj/tiny-gpu](https://github.com/adam-maj/tiny-gpu)**.
+All credit for the original GPU design — the architecture, ISA, RTL, and
+documentation — belongs to **Adam Majmudar ([@adam-maj](https://github.com/adam-maj))**.
+The original repository does not carry an explicit license, so copyright in the
+original work remains with its author; this fork is published for educational and
+portfolio purposes with attribution.
+
+The original README lists, under **Next Steps**, *"Build an adapter to use GPU
+with Tiny Tapeout"* and notes that *"anyone else is welcome to contribute"* and to
+*"feel free to put up a PR."* This fork implements exactly that next step, plus a
+full ASIC implementation flow.
+
+**Additions in this fork (my original work):**
+
+- Conversion of the SystemVerilog RTL to portable **Verilog-2005** (`src/*.v`),
+  including a Yosys-safe rewrite of the memory controller.
+- **Cadence flow** scripts: Design Compiler synthesis, TetraMax DFT scan + ATPG,
+  Innovus place-and-route (`synthesis/`, `layout/`).
+- **Open-source sky130 flow** via LibreLane (`openlane/`).
+- **TinyTapeout adapter** (`tt/`): a wrapper (`tt_um_tiny_gpu`) with on-chip
+  program/data memory and a byte-serial host loader, a shrunk gpu configuration,
+  project docs, a MicroPython host driver, and the DRC/LVS-clean sky130 tapeout
+  deliverables (`tt/tapeout/`).
+- SystemVerilog → Verilog testbenches (`test/`).
+
+If you use this, please credit the original **adam-maj/tiny-gpu** as well.
+
+---
+
 ### Table of Contents
 
 - [Overview](#overview)
